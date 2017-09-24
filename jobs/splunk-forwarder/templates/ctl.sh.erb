@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -x
+set -e
+
+RUN_DIR=/var/vcap/sys/run/splunk-forwarder
+LOG_DIR=/var/vcap/sys/log/splunk-forwarder
+JOB_DIR=/var/vcap/jobs/splunk-forwarder
+PACKAGE_DIR=/var/vcap/packages/splunk
+PIDFILE=${RUN_DIR}/pid
+
+case $1 in
+
+  start)
+    mkdir -p ${RUN_DIR} ${LOG_DIR}
+    mkdir -p ${PACKAGE_DIR}/etc/system/local
+    mkdir -p ${PACKAGE_DIR}/etc/apps/SplunkForwarder/local
+    mkdir -p ${PACKAGE_DIR}/etc/apps/splunk_httpinput/local
+    mkdir -p ${PACKAGE_DIR}/etc/auth/forwarder
+
+    chown -R vcap:vcap ${RUN_DIR} ${LOG_DIR} ${PACKAGE_DIR}/
+
+    echo $$ > ${PIDFILE}
+
+    ln -fs ${JOB_DIR}/config/system_local/* ${PACKAGE_DIR}/etc/system/local/
+    ln -fs ${JOB_DIR}/config/apps_splunkforwarder_local/* ${PACKAGE_DIR}/etc/apps/SplunkForwarder/local/
+    ln -fs ${JOB_DIR}/config/apps_splunk_httpinput_local/* ${PACKAGE_DIR}/etc/apps/splunk_httpinput/local/
+    ln -fs ${JOB_DIR}/config/auth_forwarder/* ${PACKAGE_DIR}/etc/auth/forwarder/
+
+    exec chpst -u vcap:vcap ${PACKAGE_DIR}/bin/splunk start --accept-license  --no-prompt --answer-yes\
+      >>  $LOG_DIR/forwarder.stdout.log \
+      2>> $LOG_DIR/forwarder.stderr.log
+
+    ;;
+
+  stop)
+    exec chpst -u vcap:vcap ${PACKAGE_DIR}/bin/splunk stop
+    rm -f $PIDFILE
+
+    ;;
+
+  *)
+    echo "Usage: ctl.sh {start|stop}" ;;
+
+esac

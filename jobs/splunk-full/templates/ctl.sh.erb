@@ -1,0 +1,36 @@
+#!/bin/bash
+
+RUN_DIR=/var/vcap/sys/run/splunk-full
+LOG_DIR=/var/vcap/sys/log/splunk-full
+JOB_DIR=/var/vcap/jobs/splunk-full
+PACKAGE_DIR=/var/vcap/packages/splunk
+PIDFILE=${RUN_DIR}/pid
+
+case $1 in
+
+  start)
+    mkdir -p ${RUN_DIR} ${LOG_DIR}
+    mkdir -p ${PACKAGE_DIR}/etc/system/local
+
+    chown -R vcap:vcap ${RUN_DIR} ${LOG_DIR} ${PACKAGE_DIR}/
+
+    echo $$ > ${PIDFILE}
+
+    ln -fs ${JOB_DIR}/config/system_local/* ${PACKAGE_DIR}/etc/system/local/
+
+    exec chpst -u vcap:vcap ${PACKAGE_DIR}/bin/splunk start --accept-license \
+      >>  $LOG_DIR/splunk.stdout.log \
+      2>> $LOG_DIR/splunk.stderr.log
+
+    ;;
+
+  stop)
+    /var/vcap/packages/splunk/bin/splunk stop
+    rm -f $PIDFILE
+
+    ;;
+
+  *)
+    echo "Usage: ctl.sh {start|stop}" ;;
+
+esac

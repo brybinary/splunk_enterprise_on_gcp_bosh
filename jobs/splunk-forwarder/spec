@@ -1,0 +1,52 @@
+---
+
+name: splunk-forwarder
+templates:
+  ctl.sh.erb: bin/ctl.sh
+  system_web.conf.erb: config/system_local/web.conf
+  system_outputs.conf.erb: config/system_local/outputs.conf
+  system_inputs.conf.erb: config/system_local/inputs.conf
+  system_user-seed.conf.erb: config/system_local/user-seed.conf
+  apps_splunkforwarder_app.conf.erb: config/apps_splunkforwarder_local/app.conf
+  apps_splunkforwarder_indexes.conf.erb: config/apps_splunkforwarder_local/indexes.conf
+  apps_splunkforwarder_inputs.conf.erb: config/apps_splunkforwarder_local/inputs.conf
+  apps_splunkforwarder_outputs.conf.erb: config/apps_splunkforwarder_local/outputs.conf
+  apps_splunkforwarder_server.conf.erb: config/apps_splunkforwarder_local/server.conf
+  hec_inputs.conf.erb: config/apps_splunk_httpinput_local/inputs.conf
+  hec_limits.conf.erb: config/apps_splunk_httpinput_local/limits.conf
+  client.pem.erb: config/auth_forwarder/client.pem
+  ca.pem.erb: config/auth_forwarder/ca.pem
+
+packages:
+- splunk
+
+properties:
+  cf_splunk:
+    admin_user:
+      description: Admin user name
+      default: admin
+    admin_pass:
+      description: Admin password
+      default: changeme
+    splunk_server:
+      description: Comma-separated list of Splunk servers to send data to. Each Splunk server specified in this form <address>:<port>, where address is either FQDN or IP address, and port is the port on which Splunk server is listening
+    splunk_token:
+      description: Credentials for talking to the HTTP event collector
+    splunk_ssl:
+      description: Enable SSL authentication
+      default: false
+    splunk_ssl_cert:
+      description: SSL certificate in PEM format
+      default: ''
+    splunk_ssl_password:
+      description: Password associated with SSL certificate (if applicable)
+      default: ''
+    splunk_ssl_root_ca:
+      description: Root CA certificate store. If defined, it will be used to verify Splunk server certificate(s)
+      default: ''
+    splunk_ssl_common_name:
+      description: Comma-separated list of common names. If defined, this enables checking the common name of Splunk servers certificate(s) against this list.
+      default: ''
+    splunk_ssl_alt_name:
+      description: Comma-separated list of alternate names. If defined, this enables checking the alternate name of Splunk servers certificate(s) against this list.
+      default: ''

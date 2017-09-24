@@ -1,0 +1,18 @@
+[tcpout]
+defaultGroup = default-autolb-group
+
+[tcpout:default-autolb-group]
+disabled = false
+server = <%= p('cf_splunk.splunk_server') %>
+useACK = true
+<% if p('cf_splunk.splunk_ssl', false) %>
+clientCert = $SPLUNK_HOME/etc/auth/forwarder/client.pem
+<% if_p('cf_splunk.splunk_ssl_password') do |prop| %>sslPassword = <%= prop %><% end %>
+sslVerifyServerCert = <%= p('cf_splunk.splunk_ssl_root_ca') || p('cf_splunk.splunk_ssl_common_name') || p('cf_splunk.splunk_ssl_alt_name') ? 'true' : 'false' %>
+<% if_p('cf_splunk.splunk_ssl_common_name') do |prop| %>sslCommonNameToCheck = <%= prop %><% end %>
+<% if_p('cf_splunk.splunk_ssl_alt_name') do |prop| %>sslAltNameToCheck = <%= prop %><% end %>
+useClientSSLCompression = true
+compressed = false
+<% end %>
+
+[tcpout-server://<%= p('cf_splunk.splunk_server') %>]

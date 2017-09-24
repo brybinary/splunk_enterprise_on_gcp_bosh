@@ -1,0 +1,39 @@
+resources:
+- name: source-repo
+  type: git
+  source:
+    branch: develop
+    uri: https://github.com/cloudfoundry-community/splunk-firehose-nozzle.git
+
+- name: source-release-repo
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/cloudfoundry-community/splunk-firehose-nozzle-release.git
+
+resource_types: []
+jobs:
+- name: unit-tests
+  plan:
+  - aggregate:
+    - get: source-repo
+      trigger: true
+    - get: source-release-repo
+      trigger: false
+  - task: run-deployment-tests
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: golang
+          tag: "1.7"
+      run:
+        path: source-release-repo/ci/unit.sh
+        args: []
+        dir: ""
+      inputs:
+      - name: source-release-repo
+        path: ""
+      - name: source-repo
+        path: "" 

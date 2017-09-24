@@ -1,0 +1,63 @@
+---
+name: cf-splunk
+
+releases:
+- name: cf-splunk
+  version: latest
+
+stemcells:
+- alias: default
+  os: ubuntu-trusty
+  version: latest
+
+update:
+  canaries: 1
+  max_in_flight: 1 
+  canary_watch_time: 1000-120000
+  update_watch_time: 1000-120000
+
+instance_groups:
+- name: cf-splunk-bosh
+  azs:
+  - z1
+  instances: 1
+  jobs:
+  - name: splunk-full
+    release: cf-splunk
+  vm_type: g1-small
+  stemcell: default
+  networks:
+  - name: default
+    static_ips:
+    - 10.0.0.15
+
+templates:
+  - name: splunk-forwarder
+    release: cf-splunk     
+  - name: splunk-nozzle
+    release: cf-splunk
+  - name: splunk-full
+    release: cf-splunk
+
+properties:
+  cf_splunk:
+    add_app_info: false
+    api_endoint: https://splunk.com
+    api_password: admin
+    api_user: admin
+    events:
+    - ValueMetric
+    - CounterEvent
+    - Error
+    - ContainerMetric
+    firehose_subscription_id: splunk-firehose-subscription
+    skip_ssl_validation: true
+    splunk_index: main
+    splunk_server: 10.0.0.13:9997
+    splunk_ssl: false
+    splunk_ssl_alt_name: null
+    splunk_ssl_cert: null
+    splunk_ssl_common_name: null
+    splunk_ssl_password: password
+    splunk_ssl_root_ca: null
+    splunk_token: 46D19381-22DF-497F-A6E8-F88F12079823

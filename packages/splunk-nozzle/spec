@@ -1,0 +1,8 @@
+---
+name: splunk-nozzle
+
+dependencies:
+  - golang
+
+files:
+  - splunk-firehose-nozzle/**/*

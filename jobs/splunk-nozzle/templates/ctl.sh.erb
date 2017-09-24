@@ -1,0 +1,78 @@
+#!/bin/bash
+
+set -e
+
+<%
+    # see cloudfoundry/loggregator/jobs/metron_agent/templates/metron_agent.json.erb
+    # try and set these properties from a BOSH 2.0 spec object
+    job_name = spec.job.name
+    instance_id = spec.id
+    if job_name.nil?
+      job_name = name
+    end
+    if instance_id.nil?
+      instance_id = spec.index
+    end
+
+  api_user=p('cf_splunk.api_user', '')
+  api_password=p('cf_splunk.api_password', '')
+%>
+
+RUN_DIR=/var/vcap/sys/run/splunk-nozzle
+LOG_DIR=/var/vcap/sys/log/splunk-nozzle
+DATA_DIR=/var/vcap/data/splunk-nozzle
+PIDFILE=${RUN_DIR}/pid
+
+PACKAGE_DIR=/var/vcap/packages/splunk-nozzle
+
+source /var/vcap/packages/common/pid_utils.sh
+
+case $1 in
+
+  start)
+    mkdir -p ${DATA_DIR} ${RUN_DIR} ${LOG_DIR}
+    chown -R vcap:vcap ${RUN_DIR} ${LOG_DIR} ${DATA_DIR} ${PACKAGE_DIR}/
+
+    pid_guard $PIDFILE "client-registrar"
+    echo $$ > "${PIDFILE}"
+
+    export JOB_NAME='<%= job_name %>'
+    export JOB_INDEX='<%= instance_id %>'
+    export JOB_HOST='<%= spec.address %>'
+
+    export SKIP_SSL_VALIDATION=<%= p('cf_splunk.skip_ssl_validation', false) %>
+
+    export API_ENDPOINT=<%= p('cf_splunk.api_endoint') %>
+    export API_USER=<%= api_user %>
+    export API_PASSWORD=<%= api_password %>
+    <% if properties.cf_splunk.add_app_info %>
+    export ADD_APP_INFO=true
+    export BOLTDB_PATH=${DATA_DIR}/cache.db
+    <% end %>
+    <% if_p("cf_splunk.extra_fields") do |fields| %>
+    export EXTRA_FIELDS=<%= fields %>
+    <% end %>
+
+    export EVENTS=<%= p('cf_splunk.events', ['ValueMetric','CounterEvent','Error','ContainerMetric']).join(',') %>
+    export FIREHOSE_SUBSCRIPTION_ID=<%= p('cf_splunk.firehose_subscription_id', 'splunk-firehose-subscription') %>
+
+    export SPLUNK_TOKEN=<%= p('cf_splunk.splunk_token') %>
+    export SPLUNK_HOST=http://localhost:8088
+    export SPLUNK_INDEX=<%= p('cf_splunk.splunk_index') %>
+    export FLUSH_INTERVAL=333ms
+
+    exec chpst -u vcap:vcap ${PACKAGE_DIR}/bin/splunk-firehose-nozzle \
+      >>  $LOG_DIR/splunk-nozzle.stdout.log \
+      2>> $LOG_DIR/splunk-nozzle.stderr.log
+
+    ;;
+
+  stop)
+    kill_and_wait "${PIDFILE}"
+
+    ;;
+
+  *)
+    echo "Usage: ctl.sh {start|stop}" ;;
+
+esac

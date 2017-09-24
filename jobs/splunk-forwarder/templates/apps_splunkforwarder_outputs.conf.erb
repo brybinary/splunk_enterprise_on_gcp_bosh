@@ -1,0 +1,8 @@
+# Whitelist indexes to forward including _internal
+
+[tcpout]
+maxQueueSize = 500KB
+forwardedindex.0.whitelist = .*
+forwardedindex.1.blacklist = _.*
+forwardedindex.2.whitelist = (_audit|_introspection|_telemetry|_internal)
+forwardedindex.filter.disable = false

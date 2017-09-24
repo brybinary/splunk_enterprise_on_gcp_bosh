@@ -1,0 +1,87 @@
+---
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+
+resources:
+- name: release-repo
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/cloudfoundry-community/splunk-firehose-nozzle-release.git
+    ignore_paths:
+      - ci/*.yml
+      - ci/docker/*
+
+- name: splunk-tile
+  type: s3
+  source:
+    regexp: tiles/splunk.*-(?P<version>.*)\.pivotal
+    bucket: {{s3-bucket}}
+    access_key_id: {{s3-access-key}}
+    secret_access_key: {{s3-secret}}
+
+- name: tile-history
+  type: s3
+  source:
+    versioned_file: tile-history.yml
+    bucket: {{s3-bucket}}
+    access_key_id: {{s3-access-key}}
+    secret_access_key: {{s3-secret}}
+
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: {{slack-hook}}
+
+jobs:
+
+- name: build-tile
+  plan:
+  - aggregate:
+    - get: release-repo
+    - get: tile-history
+  - task: do-build-tile
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: cfplatformeng/splunk-ci
+      inputs:
+      - name: release-repo
+      - name: tile-history
+      outputs:
+        - name: tile
+        - name: new-tile-history
+      run:
+        path: bash
+        args:
+        - -exc
+        - |
+          cp tile-history/tile-history.yml release-repo/src/splunk-firehose-nozzle/tile
+          pushd release-repo/src/splunk-firehose-nozzle/tile
+          ./build.sh
+          popd
+          mkdir -p tile
+          mv release-repo/src/splunk-firehose-nozzle/tile/product/*.pivotal tile
+          mkdir -p new-tile-history
+          cp release-repo/src/splunk-firehose-nozzle/tile/tile-history.yml new-tile-history
+    on_failure:
+      aggregate:
+        - put: slack-alert
+          params:
+            icon_emoji: ":robot_face:"
+            username: Build pipeline
+            channel: "#splunk"
+            text: "build-tile failed check main pipeline"
+  - put: splunk-tile
+    params:
+      file: tile/splunk-*.pivotal
+  - put: tile-history
+    params:
+      file: new-tile-history/tile-history.yml

@@ -1,0 +1,6 @@
+check process splunk-nozzle
+  with pidfile /var/vcap/sys/run/splunk-nozzle/pid
+  start program "/var/vcap/jobs/splunk-nozzle/bin/ctl.sh start"
+  stop program "/var/vcap/jobs/splunk-nozzle/bin/ctl.sh stop"
+  group vcap
+  depends on splunk-forwarder

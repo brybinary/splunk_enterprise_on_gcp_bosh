@@ -1,0 +1,39 @@
+---
+
+name: splunk-nozzle
+templates:
+  ctl.sh.erb: bin/ctl.sh
+
+packages:
+- common
+- splunk-nozzle
+
+properties:
+  cf_splunk:
+    skip_ssl_validation:
+      description: Skip ssl validation (for self signed certs, useful in dev environments)
+      default: false
+
+    add_app_info:
+      description: When true, nozzle will query cloud controller to add name, space, org
+      default: false
+    api_endoint:
+      description: CF api for adding app info
+    api_user:
+      description: User to authenticate against cf API (needs cloud_controller.admin or cloud_controller.admin_read_only)
+    api_password:
+      description: Password for cf_splunk.firehose_user
+
+    events:
+      description: Array of event types to include. Possible values are HttpStartStop, LogMessage, ValueMetric, CounterEvent, Error, ContainerMetric
+      default: ['ValueMetric', 'CounterEvent', 'Error', 'ContainerMetric']
+    extra_fields:
+      description: An optional list of key value pairs in the form of "key1:value1,key2:value2". These are added to the index-time fields in Splunk.
+    firehose_subscription_id:
+      description: Unique identified for nozzle. Only need to change if splunk-firehose-nozzle-releases are deployed
+      default: splunk-firehose-subscription
+
+    splunk_token:
+      description: Credentials for talking to the HTTP event collector
+    splunk_index:
+      description: Splunk index

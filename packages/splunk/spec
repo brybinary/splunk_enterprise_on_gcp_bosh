@@ -1,0 +1,8 @@
+---
+name: splunk
+
+dependencies: []
+
+files:
+  - splunk/splunk-linux-x86_64.tgz
+  - splunk/splunk-version.txt

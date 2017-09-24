@@ -1,0 +1,20 @@
+# Limit internal data inputs to splunkd and metrics logs only 
+
+################################
+# Data thru parsingQueue always
+################################
+
+[splunktcp]
+route=has_key:tautology:parsingQueue;absent_key:tautology:parsingQueue
+
+################################
+# Make sure these get forwarded
+################################
+
+[monitor://$SPLUNK_HOME/var/log/splunk/splunkd.log]
+_TCP_ROUTING = *
+index = _internal
+
+[monitor://$SPLUNK_HOME/var/log/splunk/metrics.log]
+_TCP_ROUTING = *
+index = _internal                

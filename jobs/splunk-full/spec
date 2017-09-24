@@ -1,0 +1,19 @@
+---
+
+name: splunk-full
+templates:
+  ctl.sh.erb: bin/ctl.sh
+  system_inputs.conf.erb: config/system_local/inputs.conf
+  system_user-seed.conf.erb: config/system_local/user-seed.conf
+
+packages:
+- splunk
+
+properties:
+  cf_splunk:
+    admin_user:
+      default: admin
+      description: Admin user name
+    admin_pass:
+      default: changeme
+      description: Admin password
